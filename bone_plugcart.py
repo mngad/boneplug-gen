@@ -77,7 +77,7 @@ for i in pfits:
     model.rootAssembly.Instance(dependent=ON, name='host-Cart-1',
         part=model.parts['host-Cart'])
     model.rootAssembly.translate(instanceList=('host-Cart-1',
-        'cyl-cart-1'), vector=(0.0, 0.0, 10.0))
+        'cyl-cart-1'), vector=(0.0, 0.0, 15.0))
 
 
     #cuts ie boolean

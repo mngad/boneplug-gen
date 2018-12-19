@@ -13,17 +13,17 @@ from sketch import *
 from visualization import *
 from connectorBehavior import *
 
-pfits = [0.005,0.01,0.015,0.02,0.025,0.03]
-a = ['0_005','0_01','0_015','0_02','0_025','0_03']
+pfits = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+a = ['0_1','0_2','0_3','0_4','0_5','0_6','0_7','0_8','0_9']
 count = 0
 
 fileLoc = os.getcwd() + '/'
 for i in pfits:
     depth = 10
     displacement = -5
-    host_sizeA = -50
-    host_sizeB = 50
-    graft_size = 8.5
+    host_sizeA = -20
+    host_sizeB = 20
+    graft_size = 4.25
     pressfit_size_bone = i
     pressfit_size_cart = i
     coeff_frict_cart = 0.2
@@ -117,7 +117,7 @@ for i in pfits:
     model.sketches['__edit__'].autoDimension(objectList=(
         model.sketches['__edit__'].geometry[2], ))
 
-    model.sketches['__edit__'].dimensions[0].setValues(value=10+pressfit_size_bone)
+    model.sketches['__edit__'].dimensions[0].setValues(value=graft_size+pressfit_size_bone)
     model.parts['cyl'].features['Solid extrude-1'].setValues(
         sketch=model.sketches['__edit__'])
     del model.sketches['__edit__']
@@ -131,7 +131,7 @@ for i in pfits:
         model.parts['cyl-cart'].features['Solid extrude-1'])
     model.sketches['__edit__'].autoDimension(objectList=(
         model.sketches['__edit__'].geometry[2], ))
-    model.sketches['__edit__'].dimensions[0].setValues(value=10+pressfit_size_cart)
+    model.sketches['__edit__'].dimensions[0].setValues(value=graft_size+pressfit_size_cart)
     model.parts['cyl-cart'].features['Solid extrude-1'].setValues(
         sketch=model.sketches['__edit__'])
     del model.sketches['__edit__']
@@ -184,25 +184,19 @@ for i in pfits:
 
     #MESH
     model.parts['cyl-cart'].seedPart(deviationFactor=0.1,
-        minSizeFactor=0.1, size=0.1)
-    model.parts['cyl-cart'].seedPart(deviationFactor=0.1,
-        minSizeFactor=0.1, size=1.0)
+        minSizeFactor=0.1, size=0.5)
     model.parts['cyl-cart'].setMeshControls(algorithm=MEDIAL_AXIS,
         regions=model.parts['cyl-cart'].cells.getSequenceFromMask((
         '[#1 ]', ), ))
     model.parts['cyl-cart'].generateMesh()
     model.parts['cyl'].seedPart(deviationFactor=0.1, minSizeFactor=
-        0.1, size=3.0)
-    model.parts['cyl'].seedPart(deviationFactor=0.1, minSizeFactor=
-        0.1, size=1.0)
+        0.1, size=0.5)
     model.parts['cyl'].setMeshControls(algorithm=MEDIAL_AXIS,
         regions=model.parts['cyl'].cells.getSequenceFromMask((
         '[#1 ]', ), ))
     model.parts['cyl'].generateMesh()
     model.parts['host_cart_cut'].seedPart(deviationFactor=0.1,
         minSizeFactor=0.1, size=2.0)
-    model.parts['host_cart_cut'].seedPart(deviationFactor=0.1,
-        minSizeFactor=0.1, size=5.0)
     model.parts['host_cart_cut'].setMeshControls(elemShape=TET,
         regions=
         model.parts['host_cart_cut'].cells.getSequenceFromMask((
@@ -215,9 +209,7 @@ for i in pfits:
         '[#1 ]', ), ), ))
     model.parts['host_cart_cut'].generateMesh()
     model.parts['host_cut'].seedPart(deviationFactor=0.1,
-        minSizeFactor=0.1, size=10.0)
-    model.parts['host_cut'].seedPart(deviationFactor=0.1,
-        minSizeFactor=0.1, size=5.0)
+        minSizeFactor=0.1, size=2.0)
     model.parts['host_cut'].setMeshControls(elemShape=TET, regions=
         model.parts['host_cut'].cells.getSequenceFromMask(('[#1 ]',
         ), ), technique=FREE)
@@ -309,10 +301,10 @@ for i in pfits:
         nodalOutputPrecision=SINGLE, numCpus=8, numDomains=8, numGPUs=0, queue=None
         , resultsFormat=ODB, scratch='', type=ANALYSIS, userSubroutine='',
         waitHours=0, waitMinutes=0)
-
     theJob.submit(consistencyChecking=OFF)
         #wait for job to complete before opening the odb and checking the stiffness
     theJob.waitForCompletion()
+
 
 
 fileLoc = os.getcwd() + '/'

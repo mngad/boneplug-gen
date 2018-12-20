@@ -13,25 +13,28 @@ from sketch import *
 from visualization import *
 from connectorBehavior import *
 
-pfits = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-a = ['0_1','0_2','0_3','0_4','0_5','0_6','0_7','0_8','0_9']
+pfits = [1,2,3,4,5,6]
+a = ['1','2','3','4','5','6']
 count = 0
-
 fileLoc = os.getcwd() + '/'
+
 for i in pfits:
     depth = 10
+    cart_thick = i
     displacement = -5
     host_sizeA = -20
     host_sizeB = 20
     graft_size = 4.25
-    pressfit_size_bone = i
-    pressfit_size_cart = i
+    pressfit_size_bone = 0.01
+    pressfit_size_cart = 0.01
     coeff_frict_cart = 0.2
     coeff_frict_bone = 0.5
-    name = 'CF_0_5_P_0_05_M_80_'+a[count]
+    coeff_frict_bone_cart = ((2 * coeff_frict_bone) + coeff_frict_cart) / 3
+    name = 'CF_0_5_P_0_05_M_80_' + a[count]
     count = count+1
 
     model = mdb.models['Model-1']
+
     #host
     model.ConstrainedSketch(name='__profile__', sheetSize=200.0)
     model.sketches['__profile__'].rectangle(point1=(host_sizeA, host_sizeB),
@@ -61,10 +64,10 @@ for i in pfits:
     model.Part(name='cyl-cart', objectToCopy=
         model.parts['cyl'])
     model.parts['host-Cart'].features['Solid extrude-1'].setValues(
-        depth=1.0)
+        depth=cart_thick)
     model.parts['host-Cart'].regenerate()
     model.parts['cyl-cart'].features['Solid extrude-1'].setValues(
-        depth=1.0)
+        depth=cart_thick)
     model.parts['cyl-cart'].regenerate()
 
 
@@ -77,7 +80,7 @@ for i in pfits:
     model.rootAssembly.Instance(dependent=ON, name='host-Cart-1',
         part=model.parts['host-Cart'])
     model.rootAssembly.translate(instanceList=('host-Cart-1',
-        'cyl-cart-1'), vector=(0.0, 0.0, 15.0))
+        'cyl-cart-1'), vector=(0.0, 0.0, depth))
 
 
     #cuts ie boolean
@@ -139,8 +142,9 @@ for i in pfits:
 
     model.rootAssembly.regenerate()
 
-    model.StaticStep(name='pressfit', previous='Initial')
 
+    #PRESSFIT
+    model.StaticStep(name='pressfit', previous='Initial')
 
     model.ContactProperty('IntPropbone')
     model.interactionProperties['IntPropbone'].TangentialBehavior(
@@ -152,7 +156,6 @@ for i in pfits:
         allowSeparation=ON, constraintEnforcementMethod=DEFAULT,
         pressureOverclosure=HARD)
 
-
     model.ContactProperty('IntPropcart')
     model.interactionProperties['IntPropcart'].TangentialBehavior(
         dependencies=0, directionality=ISOTROPIC, elasticSlipStiffness=None,
@@ -160,6 +163,16 @@ for i in pfits:
         pressureDependency=OFF, shearStressLimit=None, slipRateDependency=OFF,
         table=((coeff_frict_cart, ), ), temperatureDependency=OFF)
     model.interactionProperties['IntPropcart'].NormalBehavior(
+        allowSeparation=ON, constraintEnforcementMethod=DEFAULT,
+        pressureOverclosure=HARD)
+
+    model.ContactProperty('IntPropbonecart')
+    model.interactionProperties['IntPropbonecart'].TangentialBehavior(
+        dependencies=0, directionality=ISOTROPIC, elasticSlipStiffness=None,
+        formulation=PENALTY, fraction=0.005, maximumElasticSlip=FRACTION,
+        pressureDependency=OFF, shearStressLimit=None, slipRateDependency=OFF,
+        table=((coeff_frict_bone_cart, ), ), temperatureDependency=OFF)
+    model.interactionProperties['IntPropbonecart'].NormalBehavior(
         allowSeparation=ON, constraintEnforcementMethod=DEFAULT,
         pressureOverclosure=HARD)
 
@@ -181,6 +194,16 @@ for i in pfits:
         mask=('[#1 ]', ), )), name='bone_press', slave=Region(
         side1Faces=model.rootAssembly.instances['cyl-1'].faces.getSequenceFromMask(
         mask=('[#1 ]', ), )), sliding=FINITE, thickness=ON)
+
+    model.SurfaceToSurfaceContactStd(adjustMethod=NONE,
+        clearanceRegion=None, createStepName='pressfit', datumAxis=None,
+        initialClearance=OMIT, interactionProperty='IntPropbonecart', interferenceType=
+        SHRINK_FIT, master=Region(
+        side1Faces=model.rootAssembly.instances['host_cut-1'].faces.getSequenceFromMask(
+        mask=('[#1 ]', ), )), name='bonecart_press', slave=Region(
+        side1Faces=model.rootAssembly.instances['cyl-cart-1'].faces.getSequenceFromMask(
+        mask=('[#1 ]', ), )), sliding=FINITE, thickness=ON)
+
 
     #MESH
     model.parts['cyl-cart'].seedPart(deviationFactor=0.1,
@@ -291,8 +314,14 @@ for i in pfits:
         model.rootAssembly.instances['cyl-cart-1'].referencePoints[rp],
         )), u1=UNSET, u2=UNSET, u3=displacement, ur1=UNSET, ur2=UNSET, ur3=UNSET)
     model.FieldOutputRequest(createStepName='pressfit', name='F-Output-1', variables=PRESELECT)
-    # model.FieldOutputRequest(createStepName=
-    # 'disp', name='F-Output-1', variables=PRESELECT)
+    model.FieldOutputRequest(createStepName=
+    'disp', name='F-Output-1', variables=PRESELECT)
+
+
+    mdb.models['Model-1'].rootAssembly.deleteFeatures(('host_cart_cut-2', 
+    'host_cut-2'))
+
+
 
     theJob = mdb.Job(atTime=None, contactPrint=OFF, description='', echoPrint=OFF,
         explicitPrecision=SINGLE, getMemoryFromAnalysis=True, historyPrint=OFF,
@@ -301,10 +330,11 @@ for i in pfits:
         nodalOutputPrecision=SINGLE, numCpus=8, numDomains=8, numGPUs=0, queue=None
         , resultsFormat=ODB, scratch='', type=ANALYSIS, userSubroutine='',
         waitHours=0, waitMinutes=0)
+
     theJob.submit(consistencyChecking=OFF)
         #wait for job to complete before opening the odb and checking the stiffness
     theJob.waitForCompletion()
-
+    del mdb.jobs[name]
 
 
 fileLoc = os.getcwd() + '/'

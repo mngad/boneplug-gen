@@ -16,7 +16,7 @@ for filename in os.listdir(fileLoc):
                 header=0,
                 sep=',')
 
-        plt.plot(df['disp'],df['force'], label=filename[:-11])
+        plt.plot(df['disp'],df['force'], label=filename[:-11].replace('high_cart_pfit_low_fict__','').replace('_','.'))
 
 
 plt.ylabel('Force (N)')

@@ -19,7 +19,7 @@ for filename in os.listdir(fileLoc):
 	    		if ' 1. ' in line:
 	    			tmpline = str(displacement) + ',' + '0\n'
 	    		else:
-	    			tmpline = str(displacement) + ',' + line[30:]
+	    			tmpline = str(displacement) + ',' + line[34:]
 	    		tmpline = tmpline.replace('-','')
 	    		outputfile.write(tmpline)
 

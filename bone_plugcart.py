@@ -26,11 +26,11 @@ for i in pfits:
     host_sizeB = 20
     graft_size = 4.25
     pressfit_size_bone = 0.01
-    pressfit_size_cart = 0.01
-    coeff_frict_cart = 0.2
-    coeff_frict_bone = 0.5
+    pressfit_size_cart = 0.025
+    coeff_frict_cart = 0.05
+    coeff_frict_bone = 0.1
     coeff_frict_bone_cart = ((2 * coeff_frict_bone) + coeff_frict_cart) / 3
-    name = 'CF_0_5_P_0_05_M_80_' + a[count]
+    name = 'high_cart_pfit_low_fict__' + a[count]
     count = count+1
 
     model = mdb.models['Model-1']
@@ -219,7 +219,7 @@ for i in pfits:
         '[#1 ]', ), ))
     model.parts['cyl'].generateMesh()
     model.parts['host_cart_cut'].seedPart(deviationFactor=0.1,
-        minSizeFactor=0.1, size=2.0)
+        minSizeFactor=0.1, size=1.5)
     model.parts['host_cart_cut'].setMeshControls(elemShape=TET,
         regions=
         model.parts['host_cart_cut'].cells.getSequenceFromMask((
@@ -232,7 +232,7 @@ for i in pfits:
         '[#1 ]', ), ), ))
     model.parts['host_cart_cut'].generateMesh()
     model.parts['host_cut'].seedPart(deviationFactor=0.1,
-        minSizeFactor=0.1, size=2.0)
+        minSizeFactor=0.1, size=1.5)
     model.parts['host_cut'].setMeshControls(elemShape=TET, regions=
         model.parts['host_cut'].cells.getSequenceFromMask(('[#1 ]',
         ), ), technique=FREE)
@@ -304,9 +304,9 @@ for i in pfits:
         model.rootAssembly.instances['host_cut-1'].faces.getSequenceFromMask(
         mask=('[#1e ]', ), )))
     model.StaticStep(name='disp', previous='pressfit',maxNumInc=100,
-                    initialInc=0.1,
+                    initialInc=0.05,
                     minInc=0.0000025,
-                    maxInc=0.1,
+                    maxInc=0.05,
                     nlgeom=ON,matrixSolver=DIRECT, matrixStorage=UNSYMMETRIC)
     model.DisplacementBC(amplitude=UNSET, createStepName='disp',
         distributionType=UNIFORM, fieldName='', fixed=OFF, localCsys=None, name=
@@ -318,7 +318,7 @@ for i in pfits:
     'disp', name='F-Output-1', variables=PRESELECT)
 
 
-    mdb.models['Model-1'].rootAssembly.deleteFeatures(('host_cart_cut-2', 
+    mdb.models['Model-1'].rootAssembly.deleteFeatures(('host_cart_cut-2',
     'host_cut-2'))
 
 
@@ -338,7 +338,7 @@ for i in pfits:
 
 
 fileLoc = os.getcwd() + '/'
-for filename in os.listdir(fileLoc):
+for filename in sorted(os.listdir(fileLoc)):
     if filename.endswith(".odb"):
 
         odb = session.openOdb(
